@@ -1,0 +1,28 @@
+# corrosion_detection.py
+
+import numpy as np
+import cv2
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route('/corrosion', methods=['POST'])
+def detect_corrosion():
+    file = request.files['image']
+    npimg = np.fromfile(file, np.uint8)
+    img = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+
+    # Process the image to detect corrosion
+    corrosion_percentage = calculate_corrosion(img)
+    
+    return jsonify({'corrosion_percentage': corrosion_percentage})
+
+def calculate_corrosion(img):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    _, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
+    corrosion_area = np.sum(binary == 255)
+    total_area = binary.size
+    return (corrosion_area / total_area) * 100
+
+if __name__ == "__main__":
+    app.run()
